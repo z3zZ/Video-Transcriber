@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Video Transcriber</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%234f46e5'/><path d='M8 11h16M8 16h12M8 21h14' stroke='white' stroke-width='2.5' stroke-linecap='round'/></svg>">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7"/><path d="M8 11h16M8 16h12M8 21h14"/></svg>
+      <span>Video Transcriber</span>
+    </div>
+    <div class="device" id="device" title="Where transcription runs">…</div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <section class="card upload">
+        <label class="dropzone" id="dropzone" tabindex="0">
+          <input type="file" id="file-input" multiple hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          <strong>Drop videos here</strong>
+          <span>or click to browse · MP4, MKV, MOV, MP3, WAV…</span>
+        </label>
+
+        <div class="options">
+          <label>Model
+            <select id="model"></select>
+          </label>
+          <label>Language
+            <select id="language"><option value="">Auto-detect</option></select>
+          </label>
+          <label>Output
+            <select id="task">
+              <option value="transcribe">Original language</option>
+              <option value="translate">Translate to English</option>
+            </select>
+          </label>
+          <label class="check" title="Skip silent parts; faster and avoids made-up text in silence">
+            <input type="checkbox" id="vad" checked> Skip silence
+          </label>
+        </div>
+        <p class="hint" id="model-hint"></p>
+      </section>
+
+      <section class="card jobs">
+        <h2>Transcripts</h2>
+        <ul id="job-list" class="job-list"></ul>
+        <p class="empty" id="jobs-empty">No transcripts yet.</p>
+      </section>
+    </aside>
+
+    <section class="card viewer" id="viewer">
+      <div class="placeholder" id="placeholder">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 10l4.55-2.28A1 1 0 0 1 21 8.62v6.76a1 1 0 0 1-1.45.9L15 14M5 18h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2z"/></svg>
+        <h1>Turn any video into text</h1>
+        <p>Drop a video on the left. Everything runs on this computer, and nothing is uploaded to the internet.</p>
+      </div>
+
+      <div class="detail" id="detail" hidden>
+        <div class="detail-head">
+          <div class="title-block">
+            <h1 id="d-title"></h1>
+            <p class="meta" id="d-meta"></p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" id="btn-cancel" hidden>Cancel</button>
+            <button class="btn ghost danger" id="btn-delete" title="Delete transcript">Delete</button>
+          </div>
+        </div>
+
+        <div class="progress-wrap" id="progress-wrap">
+          <div class="progress"><div class="bar" id="progress-bar"></div></div>
+          <p class="status" id="d-status"></p>
+        </div>
+
+        <p class="error" id="d-error" hidden></p>
+
+        <video id="player" controls hidden></video>
+
+        <div class="toolbar" id="toolbar" hidden>
+          <input type="search" id="search" placeholder="Search transcript…">
+          <label class="check"><input type="checkbox" id="show-ts" checked> Timestamps</label>
+          <button class="btn" id="btn-copy">Copy text</button>
+          <div class="dropdown">
+            <button class="btn primary" id="btn-download">Download ▾</button>
+            <div class="menu" id="download-menu" hidden>
+              <a data-fmt="txt">Plain text (.txt)</a>
+              <a data-fmt="timestamped">Text with timestamps (.txt)</a>
+              <a data-fmt="srt">Subtitles (.srt)</a>
+              <a data-fmt="vtt">Web subtitles (.vtt)</a>
+              <a data-fmt="json">JSON (.json)</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="transcript" id="transcript"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" hidden></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

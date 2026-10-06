@@ -127,6 +127,8 @@ class JobManager:
         self._cancel.add(job_id)
         if job.status == "queued":
             self._finish(job, "cancelled", message="Cancelled")
+        else:
+            job.message = "Cancelling…"
         return True
 
     def delete(self, job_id: str) -> bool:
@@ -169,7 +171,8 @@ class JobManager:
         job.status, job.message = "running", "Starting"
 
         def on_status(msg: str) -> None:
-            job.message = msg
+            if job.id not in self._cancel:
+                job.message = msg
 
         def on_progress(frac: float, seg: dict | None) -> None:
             job.progress = round(frac, 4)
