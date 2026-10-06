@@ -22,6 +22,18 @@ function clock(sec) {
   return (h ? `${h}:` : "") + `${mm}:${String(s).padStart(2, "0")}`;
 }
 
+// Durations always read like "3h 42m", "4m 5s" or "17s".
+function dur(sec) {
+  sec = Math.round(sec || 0);
+  if (sec < 1) return "<1s";
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  if (h) return `${h}h ${m}m`;
+  if (m) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+const num = (v) => `<span class="num">${escapeHtml(String(v))}</span>`;
+
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
@@ -62,8 +74,8 @@ async function init() {
   state.info = await api("/api/info");
   const { info } = state;
   const dev = $("device");
-  dev.textContent = info.device === "cuda" ? "GPU accelerated" : "Running on CPU";
-  dev.classList.toggle("gpu", info.device === "cuda");
+  dev.innerHTML = info.device === "cuda" ? `Running on ${num("GPU")}` : `Running on ${num("CPU")}`;
+  bindContrastToggle();
 
   const prefs = loadPrefs();
   const modelSel = $("model");
@@ -139,7 +151,7 @@ function upload(file, selectIt) {
   xhr.upload.onprogress = (e) => {
     if (e.lengthComputable) {
       entry.progress = e.loaded / e.total;
-      entry.message = `Uploading ${Math.round(entry.progress * 100)}%`;
+      entry.message = "Uploading";
       renderJobs();
       if (state.selected === tempId) renderDetail(entry);
     }
@@ -164,7 +176,7 @@ function upload(file, selectIt) {
   xhr.onerror = () => {
     state.uploads.delete(tempId);
     URL.revokeObjectURL(mediaUrl);
-    toast(`${file.name}: upload failed. Is the app still running?`, 5000);
+    toast(`${file.name}: upload did not complete. The app may have stopped.`, 5000);
     renderJobs();
   };
   xhr.send(form);
@@ -193,11 +205,17 @@ function allJobs() {
 
 const STATUS_LABEL = { uploading: "Uploading", queued: "Queued", running: "Working", done: "Done", error: "Failed", cancelled: "Cancelled" };
 
+const when = (t) => num(new Date(t * 1000).toLocaleString([], { dateStyle: "short", timeStyle: "short" }));
+
+// Returns HTML.
 function jobSubtitle(j) {
-  if (j.status === "done") return `${clock(j.duration)} · ${j.detected_language || "?"} · ${new Date(j.finished_at * 1000).toLocaleString()}`;
-  if (j.status === "running" || j.status === "uploading") return j.message;
-  if (j.status === "error") return j.error || "Failed";
-  return new Date(j.created_at * 1000).toLocaleString();
+  if (j.status === "done") return `${num(dur(j.duration))} · ${escapeHtml(j.detected_language || "?")} · ${when(j.finished_at)}`;
+  if (j.status === "running" || j.status === "uploading") {
+    const pct = Math.round((j.progress || 0) * 100);
+    return escapeHtml(j.message || "") + (pct ? ` · ${num(pct + "%")}` : "");
+  }
+  if (j.status === "error") return escapeHtml(j.error || "Failed");
+  return when(j.created_at);
 }
 
 function renderJobs() {
@@ -208,7 +226,7 @@ function renderJobs() {
     <li class="job ${j.id === state.selected ? "selected" : ""}" data-id="${j.id}" title="${escapeHtml(j.filename)}">
       <span class="name">${escapeHtml(j.filename)}</span>
       <span class="badge ${j.status}">${STATUS_LABEL[j.status] || j.status}</span>
-      <span class="sub">${escapeHtml(jobSubtitle(j))}</span>
+      <span class="sub">${jobSubtitle(j)}</span>
       ${ACTIVE.has(j.status) ? `<div class="mini"><div style="width:${Math.round((j.progress || 0) * 100)}%"></div></div>` : ""}
     </li>`).join("");
 }
@@ -262,13 +280,13 @@ function renderDetail(job) {
 
   $("d-title").textContent = job.filename;
   const meta = [];
-  if (job.duration) meta.push(`Length ${clock(job.duration)}`);
-  if (job.detected_language) meta.push(`Language: ${job.detected_language}`);
-  if (job.used_model || job.model) meta.push(`Model: ${job.used_model || job.model || "default"}`);
+  if (job.duration) meta.push(`Length ${num(dur(job.duration))}`);
+  if (job.detected_language) meta.push(`Language: ${escapeHtml(job.detected_language)}`);
+  if (job.used_model || job.model) meta.push(`Model: ${escapeHtml(job.used_model || job.model)}`);
   if (job.task === "translate") meta.push("Translated to English");
-  if (job.device) meta.push(job.device.toUpperCase());
-  if (job.elapsed) meta.push(`took ${job.elapsed < 60 ? job.elapsed.toFixed(1) + "s" : clock(job.elapsed)}`);
-  $("d-meta").textContent = meta.join(" · ");
+  if (job.device) meta.push(num(job.device.toUpperCase()));
+  if (job.elapsed) meta.push(`Took ${num(dur(job.elapsed))}`);
+  $("d-meta").innerHTML = meta.join(" · ");
 
   const active = ACTIVE.has(job.status);
   $("progress-wrap").hidden = !active;
@@ -277,10 +295,10 @@ function renderDetail(job) {
     const indeterminate = job.status === "queued" || (job.status === "running" && !pct);
     $("progress-wrap").querySelector(".progress").classList.toggle("indeterminate", indeterminate);
     $("progress-bar").style.width = indeterminate ? "" : pct + "%";
-    let status = job.message || "";
-    if (job.status === "queued" && job.queue_position > 1) status = `Waiting in queue (position ${job.queue_position})`;
-    if (job.status === "running" && pct) status += ` · ${pct}%`;
-    $("d-status").textContent = status;
+    let status = escapeHtml(job.message || "");
+    if (job.status === "queued" && job.queue_position > 1) status = `Waiting in queue, position ${num(job.queue_position)}`;
+    if ((job.status === "running" || job.status === "uploading") && pct) status += ` · <span class="pct">${pct}%</span>`;
+    $("d-status").innerHTML = status;
   }
   $("btn-cancel").hidden = !active;
   $("btn-delete").hidden = active;
@@ -403,6 +421,22 @@ function bindViewer() {
         if (!$("player").paused) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
     }
+  });
+}
+
+// ---------------------------------------------------------------- high contrast
+
+function bindContrastToggle() {
+  const btn = $("contrast-toggle");
+  const sync = () => btn.setAttribute("aria-pressed", String(document.documentElement.dataset.theme === "contrast"));
+  sync();
+  btn.addEventListener("click", () => {
+    const on = document.documentElement.dataset.theme !== "contrast";
+    if (on) document.documentElement.dataset.theme = "contrast";
+    else delete document.documentElement.dataset.theme;
+    document.querySelector('meta[name="theme-color"]').content = on ? "#000000" : "#0D0D0D";
+    try { localStorage.setItem("vt-theme", on ? "contrast" : "klokd"); } catch {}
+    sync();
   });
 }
 

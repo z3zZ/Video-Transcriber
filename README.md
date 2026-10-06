@@ -14,6 +14,8 @@ download it as plain text, subtitles (SRT/VTT) or JSON.
 - **No ffmpeg install needed.** Audio is decoded with the bundled PyAV libraries.
 - **Auto-detects the spoken language** (Whisper supports about 99) and can translate any of them to English.
 - **Web app and command line**, which share the same engine.
+- **Klokd styling with a high-contrast mode.** The toggle in the top-right corner switches
+  to a black, white and yellow theme with thicker borders and focus outlines. Your choice is remembered.
 
 ---
 
@@ -76,6 +78,12 @@ python -m transcriber
      | Subtitles `.srt` | Video players (VLC etc.), YouTube, video editors |
      | Web subtitles `.vtt` | HTML5 `<video>` captions |
      | JSON `.json` | Programs: segments with start and end times in seconds |
+
+**High contrast:** the *High contrast* switch in the top bar swaps the Klokd theme for
+pure black, white and yellow with 2–3px borders, bold focus rings and solid search
+highlights. The setting is saved in your browser.
+
+<img src="docs/screenshot-contrast.jpg" alt="High contrast mode" width="560">
 
 Finished transcripts stay in the **Transcripts** list (saved in `data/jobs/`), so they're
 still there after a restart. Delete any you don't need. Uploaded videos are deleted as
@@ -182,7 +190,7 @@ video-transcriber/
 │   ├── jobs.py                background queue and history
 │   ├── engine.py              faster-whisper wrapper, GPU detection, fallback
 │   ├── formats.py             transcript renderers
-│   └── static/                web UI (plain HTML/CSS/JS, no build step)
+│   └── static/                web UI (plain HTML/CSS/JS, no build step) + bundled JetBrains Mono
 ├── tests/                     pytest suite (the API tests use a fake engine, so no model is needed)
 ├── scripts/make_sample_video.py   builds a test MP4 from a WAV without ffmpeg
 └── data/                      created at runtime: uploads + transcript history (git-ignored)
@@ -227,7 +235,7 @@ python -m transcriber transcribe sample.mp4 -m tiny -v
 | --- | --- |
 | Badge says **"Running on CPU"** but you have an NVIDIA GPU | Install the GPU libraries with `.venv\Scripts\python -m pip install -r requirements-gpu.txt` and restart. Also update your NVIDIA driver (CUDA 12 support needed). |
 | First transcription seems stuck on "Loading model" | It's downloading the model (up to 3 GB for `large-v3`). Later runs start in seconds. |
-| "Could not read an audio track from this file" | The file has no audio stream, or it's damaged or DRM-protected. |
+| "No readable audio track was found in this file" | The file has no audio stream, or it's damaged or DRM-protected. |
 | Out of GPU memory | Use `large-v3-turbo` or `small` instead of `large-v3`, or close other GPU-heavy apps. |
 | Text repeats or appears during silence | Keep **Skip silence** on, and set the language explicitly. |
 | Last words like "thanks for watching" are missing | Whisper models often skip typical video outros. It's a known model quirk. |
@@ -242,3 +250,4 @@ and read your transcripts, so do that only on networks you trust.
 ## License
 
 MIT. See [LICENSE](LICENSE). Whisper models are released by OpenAI under the MIT license.
+JetBrains Mono is bundled under the SIL Open Font License (`transcriber/static/fonts/OFL.txt`).

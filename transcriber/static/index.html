@@ -4,16 +4,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Video Transcriber</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%234f46e5'/><path d='M8 11h16M8 16h12M8 21h14' stroke='white' stroke-width='2.5' stroke-linecap='round'/></svg>">
+  <meta name="theme-color" content="#0D0D0D">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230D0D0D'/><rect x='1' y='1' width='30' height='30' rx='6' fill='none' stroke='%232A2A2A' stroke-width='2'/><path d='M9 11h14M9 16h10M9 21h12' stroke='%23F0F0F0' stroke-width='2.5' stroke-linecap='round'/></svg>">
+  <script>
+    // Apply the saved theme before first paint to avoid a flash.
+    try { if (localStorage.getItem("vt-theme") === "contrast") document.documentElement.dataset.theme = "contrast"; } catch {}
+  </script>
+  <link rel="preload" href="/static/fonts/JetBrainsMono-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7"/><path d="M8 11h16M8 16h12M8 21h14"/></svg>
-      <span>Video Transcriber</span>
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="7"/><path d="M9 11h14M9 16h10M9 21h12"/></svg>
+      <span class="wordmark" aria-label="Video Transcriber">Vide<span class="o">o</span> Transcriber</span>
     </div>
-    <div class="device" id="device" title="Where transcription runs">…</div>
+    <div class="top-right">
+      <div class="device" id="device" title="Where transcription runs">…</div>
+      <button class="toggle" id="contrast-toggle" type="button" aria-pressed="false"
+              aria-label="High contrast mode" title="High contrast mode">
+        <span class="track" aria-hidden="true"></span><span class="label">High contrast</span>
+      </button>
+    </div>
   </header>
 
   <main class="layout">
@@ -77,7 +89,7 @@
           <p class="status" id="d-status"></p>
         </div>
 
-        <p class="error" id="d-error" hidden></p>
+        <p class="error-box" id="d-error" hidden></p>
 
         <video id="player" controls hidden></video>
 

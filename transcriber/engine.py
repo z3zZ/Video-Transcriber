@@ -251,5 +251,5 @@ def _friendly_decode_error(exc: Exception) -> str:
     msg = str(exc)
     low = msg.lower()
     if "invalid data" in low or "could not find" in low or "no audio" in low or "stream" in low:
-        return "Could not read an audio track from this file. Is it a valid video/audio file with sound?"
+        return "No readable audio track was found in this file."
     return f"Could not decode media: {msg}"

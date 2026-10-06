@@ -138,3 +138,11 @@ def test_history_persists_and_delete(client, tmp_path, monkeypatch):
         assert c2.delete(f"/api/jobs/{job['id']}").json() == {"ok": True}
         assert c2.get(f"/api/jobs/{job['id']}").status_code == 404
     assert not (tmp_path / "jobs" / f"{job['id']}.json").exists()
+
+
+def test_ui_assets_revalidate_and_font_bundled(client):
+    for path in ("/", "/static/style.css", "/static/fonts/JetBrainsMono-latin.woff2"):
+        res = client.get(path)
+        assert res.status_code == 200, path
+        assert res.headers["cache-control"] == "no-cache"
+    assert "cache-control" not in client.get("/api/info").headers

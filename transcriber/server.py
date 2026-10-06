@@ -26,6 +26,14 @@ def create_app(data_dir: Path | None = None, device: str | None = None) -> FastA
     app = FastAPI(title="Video Transcriber", version=__version__)
     app.state.manager = manager
 
+    @app.middleware("http")
+    async def revalidate_ui(request, call_next):
+        # Always revalidate UI files so an updated app never runs with stale CSS/JS.
+        response = await call_next(request)
+        if not request.url.path.startswith("/api/"):
+            response.headers["Cache-Control"] = "no-cache"
+        return response
+
     def get_job_or_404(job_id: str):
         job = manager.get(job_id)
         if not job:
