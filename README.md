@@ -32,6 +32,16 @@ The first launch takes a few minutes. It creates a private Python environment in
 installs the dependencies, and adds the GPU libraries if it finds an NVIDIA card. Your
 browser then opens at **http://localhost:8765**. Later launches start in seconds.
 
+**Desktop shortcut (optional):** to get a *Video Transcriber* icon on your desktop, run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\create_shortcut.ps1
+```
+
+Add `-StartMenu` to put it in the Start menu as well. The shortcut can also be pinned to the
+taskbar. It starts the app in a minimised console window, and closing that window stops the app.
+If the app is already running, the shortcut just opens it in your browser again.
+
 ### macOS / Linux
 
 ```bash

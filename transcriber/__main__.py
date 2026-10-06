@@ -17,13 +17,31 @@ from pathlib import Path
 from . import __version__, engine, formats
 
 
+def _already_running(url: str) -> bool:
+    import json
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(f"{url}/api/info", timeout=1) as res:
+            return "default_model" in json.load(res)
+    except Exception:
+        return False
+
+
 def _serve(args: argparse.Namespace) -> int:
     import uvicorn
 
     from .server import create_app
 
-    app = create_app(data_dir=args.data_dir, device=args.device)
     url = f"http://{'localhost' if args.host in ('127.0.0.1', '0.0.0.0') else args.host}:{args.port}"
+    if _already_running(url):
+        # Launched again (e.g. desktop shortcut double-clicked twice): just show the open app.
+        print(f"Video Transcriber is already running at {url}")
+        if not args.no_browser:
+            webbrowser.open(url)
+        return 0
+
+    app = create_app(data_dir=args.data_dir, device=args.device)
     print(f"\n  Video Transcriber v{__version__} running at {url}\n  Press Ctrl+C to stop.\n")
     if not args.no_browser:
         threading.Timer(1.2, webbrowser.open, args=(url,)).start()
