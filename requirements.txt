@@ -1,4 +1,6 @@
 faster-whisper>=1.1
+# faster-whisper 1.2.x passes an argument removed in PyAV 19
+av>=15,<19
 fastapi>=0.110
 uvicorn[standard]>=0.29
 python-multipart>=0.0.9
